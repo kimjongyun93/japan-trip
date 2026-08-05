@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>일본 전 지역 비교 · 어디로 갈까</title>
+<style>
+  :root{
+    --sumi:#191E26; --ai:#26456F; --ai-soft:#3E6DA8; --asagi:#7FA9C4;
+    --karashi:#C08A2E; --paper:#EDEBE5; --paper-2:#F7F6F2;
+    --rule:#D3CFC5; --muted:#6C6A64; --alert:#A8442F; --ok:#3F7A5A; --murasaki:#6B5B95;
+    --mono: ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic","맑은 고딕",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--paper);color:var(--sumi);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px 80px}
+
+  .board{background:var(--sumi);color:var(--paper-2);padding:26px 20px 22px;border-bottom:3px solid var(--karashi);margin-bottom:32px}
+  .board-inner{max-width:880px;margin:0 auto}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--asagi);text-transform:uppercase}
+  .board h1{font-size:clamp(24px,5vw,34px);font-weight:800;letter-spacing:-.02em;margin:6px 0 8px}
+  .board p{margin:0;color:#A9B4BF;font-size:14px;max-width:56ch}
+
+  h2.sec{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--muted);
+    text-transform:uppercase;font-weight:400;margin:38px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--rule)}
+  .lead{font-size:14px;color:var(--muted);margin:-4px 0 16px}
+
+  .people{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+  .person{background:var(--paper-2);border:1px solid var(--rule);padding:14px 16px}
+  .person-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .person-top input{flex:1;border:0;border-bottom:1px solid var(--rule);background:transparent;
+    font-family:var(--sans);font-size:15px;font-weight:700;padding:3px 0;color:var(--sumi)}
+  .person-top input:focus{outline:none;border-bottom-color:var(--ai-soft)}
+  .rm{background:none;border:0;color:var(--muted);cursor:pointer;font-size:17px;line-height:1;padding:2px 4px}
+  .rm:hover{color:var(--alert)}
+  .presets{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;padding-bottom:11px;border-bottom:1px dashed var(--rule)}
+  .pre{font-size:11.5px;padding:4px 9px;border:1px solid var(--rule);background:var(--paper);
+    border-radius:999px;cursor:pointer;color:var(--muted);font-family:var(--sans)}
+  .pre:hover{border-color:var(--ai-soft);color:var(--ai)}
+  .sliders{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px}
+  .slider .lab{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:1px}
+  .slider .val{font-family:var(--mono);font-size:11px;color:var(--ai)}
+  input[type=range]{width:100%;accent-color:var(--ai);margin:0 0 6px}
+
+  .addbtn{background:transparent;border:1px dashed var(--rule);border-radius:2px;padding:12px 18px;
+    font-family:var(--sans);font-size:14px;cursor:pointer;color:var(--muted);margin-top:14px}
+  .addbtn:hover{border-color:var(--ai-soft);color:var(--ai)}
+
+  .rank{margin-bottom:14px;cursor:pointer;background:none;border:0;width:100%;text-align:left;
+    font-family:var(--sans);padding:0;color:inherit;display:block}
+  .rank-top{display:flex;align-items:baseline;gap:10px;margin-bottom:5px}
+  .rank-no{font-family:var(--mono);font-size:12px;color:var(--muted);width:22px}
+  .rank-name{font-size:16px;font-weight:700;letter-spacing:-.01em}
+  .rank-win{font-family:var(--mono);font-size:10px;letter-spacing:.14em;background:var(--karashi);
+    color:#fff;padding:2px 7px;border-radius:2px}
+  .rank-pct{margin-left:auto;font-family:var(--mono);font-size:14px;font-weight:700}
+  .bar{height:8px;background:#DEDBD3;border-radius:1px;overflow:hidden;margin-left:32px}
+  .bar i{display:block;height:100%;background:var(--ai-soft);transition:width .45s cubic-bezier(.2,.7,.3,1)}
+  .rank.win .bar i{background:var(--karashi)}
+  .rank-sub{margin-left:32px;font-size:12.5px;color:var(--muted);margin-top:4px}
+
+  details.route{border:1px solid var(--rule);background:var(--paper-2);margin-bottom:10px}
+  details.route summary{cursor:pointer;padding:13px 16px;font-weight:700;font-size:15.5px;
+    display:flex;align-items:center;gap:10px;list-style:none}
+  details.route summary::-webkit-details-marker{display:none}
+  details.route summary em{font-style:normal;font-weight:400;font-size:13px;color:var(--muted)}
+  details.route summary::after{content:"＋";margin-left:auto;color:var(--muted);font-weight:400}
+  details.route[open] summary::after{content:"−"}
+  details.route[open] summary{border-bottom:1px solid var(--rule)}
+  .rbody{padding:16px}
+  .tagline{color:#3B3F46;margin:0 0 14px}
+
+  .scores{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px}
+  .sc{font-family:var(--mono);font-size:11px;border:1px solid var(--rule);padding:3px 8px;background:var(--paper)}
+  .sc b{color:var(--ai);font-weight:700}
+
+  .line{position:relative;padding-left:32px;margin:0 0 16px}
+  .line::before{content:"";position:absolute;left:6px;top:8px;bottom:8px;width:2px;background:var(--ai-soft)}
+  .stop{position:relative;margin-bottom:13px}
+  .stop::before{content:"";position:absolute;left:-30px;top:6px;width:11px;height:11px;border-radius:50%;
+    background:var(--paper-2);border:2.5px solid var(--ai)}
+  .stop.onsen::before{background:var(--karashi);border-color:var(--karashi)}
+  .stop .t{font-weight:700;font-size:15px}
+  .stop .x{font-size:14px;color:#3B3F46}
+
+  .note{border-left:3px solid var(--rule);padding:10px 0 10px 13px;margin-bottom:14px;font-size:14px}
+  .note h5{margin:0 0 4px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);font-weight:400}
+  .note.air{border-left-color:var(--ai-soft)}
+  .note.seichi{border-left-color:var(--murasaki)}
+  .note.planb{border-left-color:var(--karashi)}
+  .note ul{margin:0;padding-left:16px}
+  .note li{margin-bottom:3px}
+
+  .pc{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+  .pc h5{margin:0 0 6px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .pc ul{margin:0;padding-left:16px;font-size:14px}
+  .pc li{margin-bottom:4px}
+  .pc .good li::marker{color:var(--ok)}
+  .pc .bad li::marker{color:var(--alert)}
+
+  .share{background:var(--paper-2);border:1px solid var(--rule);padding:18px}
+  .share ol{margin:0;padding-left:20px;font-size:14px}
+  .share li{margin-bottom:8px}
+  .share a{color:var(--ai);font-weight:600}
+
+  .foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--rule);font-size:13px;color:var(--muted)}
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+  @media (max-width:560px){.pc,.sliders{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="board">
+  <div class="board-inner">
+    <div class="eyebrow">일본 11개 권역 · 8월 하순 기준</div>
+    <h1>어디로 갈지 정해봅시다</h1>
+    <p>각자 중요하게 여기는 것을 슬라이더로 옮기면 우리에게 맞는 지역이 계산됩니다. 관심 없는 항목은 0으로 두면 계산에서 빠집니다.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <h2 class="sec">1 · 각자 무엇이 중요한가</h2>
+  <p class="lead">프리셋을 누르면 한 번에 채워지고, 이후 슬라이더로 다듬을 수 있습니다.</p>
+  <div class="people" id="people"></div>
+  <button type="button" class="addbtn" id="add">＋ 사람 추가</button>
+
+  <h2 class="sec">2 · 우리에게 맞는 순서</h2>
+  <p class="lead">막대를 누르면 그 지역의 상세가 열립니다.</p>
+  <div id="rank"></div>
+
+  <h2 class="sec">3 · 지역별 상세</h2>
+  <div id="details"></div>
+
+  <h2 class="sec">4 · 친구들에게 공유하는 방법</h2>
+  <div class="share">
+    <p style="margin:0 0 14px;font-size:14px">이 페이지는 외부 서버와 통신하지 않습니다. 파일 하나만 있으면 인터넷 없이도 그대로 작동합니다.</p>
+
+    <h5 style="margin:0 0 6px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">방법 1 · 파일을 그대로 보내기</h5>
+    <p style="margin:0 0 16px;font-size:14px">이 페이지를 <b>여행비교.html</b> 로 저장해 단톡방에 파일로 올립니다. 친구들이 내려받아 열면 끝입니다. 어디에도 올리지 않아 가장 간단하지만, 아이폰에서는 파일 앱을 거쳐야 해서 조금 번거롭습니다.</p>
+
+    <h5 style="margin:0 0 6px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">방법 2 · 깃허브 페이지로 링크 만들기</h5>
+    <ol style="margin:0 0 16px">
+      <li>깃허브에서 저장소를 새로 만들고 <b>Public</b> 으로 둡니다.</li>
+      <li>파일을 <b>index.html</b> 이라는 이름으로 올립니다.</li>
+      <li>Settings → Pages → Source 를 <b>main</b> 브랜치로 지정합니다.</li>
+      <li>몇 분 뒤 <b>아이디.github.io/저장소이름</b> 주소가 열립니다. 이 주소를 단톡방에 올리면 됩니다.</li>
+    </ol>
+    <p style="margin:0 0 16px;font-size:14px">공개 저장소라 누구나 코드를 볼 수 있지만, 여기에는 비밀번호도 API 키도 없어 문제되지 않습니다. 주소를 아는 사람만 찾아올 수 있고, 한 번 만들면 계속 유지됩니다.</p>
+
+    <h5 style="margin:0 0 6px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">방법 3 · 넷리파이 드롭</h5>
+    <p style="margin:0;font-size:14px">가입 없이 <a href="https://app.netlify.com/drop" target="_blank" rel="noopener">app.netlify.com/drop</a> 에 파일을 끌어다 놓으면 즉시 주소가 생깁니다. 가장 빠르지만 가입하지 않으면 주소가 일정 시간 뒤 사라집니다.</p>
+  </div>
+
+  <p class="foot">점수는 8월 하순 여행을 기준으로 매긴 상대 평가입니다. 항공료와 기온은 해마다 달라지므로 예약 전에 직접 확인하세요. 성지순례 항목의 일부는 제작사가 공식 확인한 것이 아니라 팬들이 닮았다고 지목한 곳입니다.</p>
+</div>
+
+<script>
+const CRIT = [
+  {k:"food",  name:"음식"},
+  {k:"onsen", name:"온천"},
+  {k:"herit", name:"문화재·전통"},
+  {k:"nat",   name:"자연·풍경"},
+  {k:"city",  name:"도시·쇼핑"},
+  {k:"anime", name:"애니 성지"},
+  {k:"cool",  name:"시원함"},
+  {k:"cost",  name:"가성비"},
+  {k:"easy",  name:"이동 편함"}
+];
+
+const PRESETS = {
+  "피서형":   {food:3,onsen:4,herit:2,nat:4,city:1,anime:1,cool:5,cost:2,easy:3},
+  "미식형":   {food:5,onsen:3,herit:2,nat:2,city:3,anime:1,cool:2,cost:3,easy:3},
+  "문화재형": {food:3,onsen:3,herit:5,nat:3,city:2,anime:1,cool:2,cost:3,easy:3},
+  "성지순례형":{food:3,onsen:2,herit:3,nat:2,city:3,anime:5,cool:2,cost:3,easy:4},
+  "온천휴양형":{food:3,onsen:5,herit:2,nat:4,city:1,anime:1,cool:3,cost:3,easy:4},
+  "가성비형": {food:3,onsen:3,herit:3,nat:2,city:3,anime:2,cool:2,cost:5,easy:5}
+};
+
+const R = [
+  {
+    id:"hokkaido", name:"홋카이도", air:"신치토세 · 하코다테", temp:"24~26도", days:"5~7일",
+    line:"해산물과 온천, 그리고 서늘한 공기. 8월에 가장 시원하지만 넓어서 이동이 길다.",
+    s:{food:5,onsen:5,herit:2,nat:5,city:3,anime:3,cool:5,cost:2,easy:2},
+    stops:[
+      {t:"삿포로",x:"징기스칸, 미소라멘, 수프카레. 스스키노 밤거리",o:false},
+      {t:"오타루",x:"운하와 유리공방, 스시야도리. 쾌속 32분",o:false},
+      {t:"노보리베쓰",x:"지옥계곡. 홋카이도 대표 온천지",o:true},
+      {t:"하코다테",x:"모토마치 개항기 건축, 아침시장, 고료카쿠",o:true},
+      {t:"후라노·비에이",x:"구릉 풍경. 라벤더는 7월에 끝남",o:false}
+    ],
+    air2:["신치토세 직항이 많지만 성수기 왕복 60만원대까지 오름","도쿄 경유는 신칸센이 4시간 넘어 실익이 없음","하코다테 IN, 삿포로 OUT 오픈조를 검토할 만함"],
+    seichi:["『골든 카무이』 삿포로 개척촌·홋카이도청","『은수저』 도카치 낙농 지대"],
+    planb:["비 오면 오타루 유리공방 체험, 삿포로 지하 아케이드","시로이코이비토 파크, 삿포로 맥주박물관"],
+    good:["해산물 수준이 일본 최상급","낮 24~26도로 압도적으로 시원","노보리베쓰·조잔케이 온천","넓은 자연 풍경"],
+    bad:["절이나 성 같은 문화재가 적음","지역이 넓어 이동 시간이 김","렌터카 없으면 코스가 제한됨","성수기 항공료가 비쌈"]
+  },
+  {
+    id:"tohoku", name:"도호쿠", air:"센다이 · 아오모리", temp:"27~28도", days:"5~6일",
+    line:"우설과 면 요리, 그리고 산속 온천마을. 거점 하나로 사방을 다녀올 수 있다.",
+    s:{food:5,onsen:5,herit:3,nat:4,city:2,anime:4,cool:4,cost:3,easy:4},
+    stops:[
+      {t:"센다이",x:"규탄(우설) 원조. 즌다모찌, 조젠지도리",o:false},
+      {t:"마쓰시마",x:"일본 3대 절경. 국보 즈이간지, 굴과 아나고",o:false},
+      {t:"긴잔온천",x:"목조 료칸과 가스등. 여름에도 서늘함",o:true},
+      {t:"야마데라",x:"절벽에 매달린 당우. 계단 1015개",o:false},
+      {t:"히라이즈미",x:"세계유산 주손지 금색당",o:false},
+      {t:"모리오카",x:"냉면·자자멘·완코소바의 3대 면 도시",o:false}
+    ],
+    air2:["센다이 직항은 주 8편뿐이라 성수기 왕복 60만원대","도쿄 IN/OUT + JR동일본 패스가 30만원 이상 저렴할 수 있음","도쿄~센다이 신칸센 편도 1시간 35분"],
+    seichi:["『하이큐!!』 센다이 시내와 미야기 곳곳","긴잔온천은 『센과 치히로』를 닮았다고 팬들이 지목한 곳(공식 확인은 아님)"],
+    planb:["더우면 센다이 지하상가와 미디어테크","비 오면 즈이간지 실내 관람, 규탄 노포 순례"],
+    good:["우설을 원조에서 먹을 수 있음","긴잔온천의 가스등 야경","거점 하나로 왕복해 짐을 덜 옮김","면 요리 종류가 풍부"],
+    bad:["대도시 쇼핑은 기대하기 어려움","문화재 밀도는 중간","직항 편수가 적어 항공료가 높음","명소가 흩어져 있음"]
+  },
+  {
+    id:"kanto", name:"간토 · 도쿄", air:"나리타 · 하네다", temp:"31~33도", days:"3~6일",
+    line:"무엇이든 있는 대신 무엇도 압도적이지 않다. 항공편이 많아 가장 유연하다.",
+    s:{food:4,onsen:3,herit:3,nat:2,city:5,anime:5,cool:1,cost:4,easy:5},
+    stops:[
+      {t:"도쿄",x:"스시·라멘·이자카야, 시부야·긴자·아사쿠사",o:false},
+      {t:"하코네",x:"온천과 아시노코 호수. 신주쿠에서 1시간 30분",o:true},
+      {t:"닛코",x:"세계유산 도쇼구, 주젠지 호수. 산간이라 시원함",o:false},
+      {t:"가마쿠라",x:"대불과 해변, 에노덴 전차. 당일치기",o:false},
+      {t:"가와고에",x:"에도 정취가 남은 창고 거리. 30분",o:false}
+    ],
+    air2:["나리타·하네다는 하루 수십 편이라 표를 구하기 쉬움","성수기에도 왕복 30만원 안팎에서 잡히는 편","도호쿠·호쿠리쿠로 넘어가는 신칸센 관문이기도 함"],
+    seichi:["『너의 이름은』 요쓰야 스가 신사 계단","『슬램덩크』 가마쿠라코코마에역 건널목","미타카 지브리미술관(예약제)"],
+    planb:["더우면 미술관·수족관·지하상가로 피신","비 오면 아키하바라, 시부야 실내 상업시설"],
+    good:["항공편이 많아 표를 구하기 쉬움","당일치기 근교가 다양함","교통이 촘촘해 이동이 쉬움","성지순례 스팟이 가장 많음"],
+    bad:["도심은 무척 덥고 사람이 많음","숙박비가 비싼 편","자연 풍경은 약함","이미 다녀왔을 확률이 높음"]
+  },
+  {
+    id:"chubu", name:"중부 · 호쿠리쿠", air:"나고야 · 고마쓰", temp:"30~33도", days:"4~6일",
+    line:"에도 시대 거리와 세계유산 마을. 문화재로는 간사이 다음이면서 사람은 훨씬 적다.",
+    s:{food:4,onsen:4,herit:5,nat:4,city:2,anime:5,cool:3,cost:3,easy:3},
+    stops:[
+      {t:"게로온천",x:"구사쓰·아리마와 함께 일본 3대 명천",o:true},
+      {t:"다카야마",x:"200년 넘은 목조 거리. 해발 570m라 서늘함",o:false},
+      {t:"히다후루카와",x:"흰 벽 창고와 잉어가 헤엄치는 수로",o:false},
+      {t:"시라카와고",x:"세계유산 갓쇼즈쿠리 마을",o:false},
+      {t:"가나자와",x:"겐로쿠엔, 히가시차야가이, 사무라이 저택",o:false}
+    ],
+    air2:["나고야 직항은 편수가 많고 가격이 안정적","고마쓰(가나자와)는 주 3회라 요일이 맞아야 함","나고야 IN / 고마쓰 OUT 오픈조가 되돌아오지 않는 관통 루트"],
+    seichi:["『너의 이름은』 히다후루카와역과 히다시 도서관","『빙과』 다카야마 시내 전반"],
+    planb:["더우면 다카야마 진야·박물관, 가나자와 21세기미술관","비 오면 시라카와고 대신 가나자와 실내 코스"],
+    good:["문화재·전통 정취가 최상급","되돌아오는 구간 없는 관통 루트","게로온천이 길목에 있음","산간부는 뚜렷하게 시원함"],
+    bad:["가나자와는 33도로 더움","고마쓰 노선이 주 3회로 제한적","시라카와고는 낮에 매우 붐빔","대도시 편의는 약함"]
+  },
+  {
+    id:"kansai", name:"간사이", air:"간사이(오사카)", temp:"34~35도", days:"3~6일",
+    line:"문화재 밀도는 일본 최고. 대신 8월에는 가장 덥고 가장 붐빈다.",
+    s:{food:5,onsen:2,herit:5,nat:2,city:4,anime:3,cool:1,cost:5,easy:5},
+    stops:[
+      {t:"교토",x:"기요미즈데라, 후시미이나리, 아라시야마",o:false},
+      {t:"오사카",x:"도톤보리, 오사카성. 다코야키와 쿠시카츠",o:false},
+      {t:"나라",x:"도다이지 대불과 사슴공원. 40분",o:false},
+      {t:"고베",x:"기타노 이진칸, 아리마온천",o:true},
+      {t:"고야산",x:"산속 사찰 숙박(슈쿠보). 서늘하고 조용함",o:false}
+    ],
+    air2:["간사이공항은 편수가 가장 많고 LCC 경쟁이 심해 저렴","성수기에도 20만원대가 나오는 편","교토·나라·고베가 전부 1시간 안쪽"],
+    seichi:["『케이온!』 시가현 도요사토 소학교 구교사","교토 애니메이션 작품들의 배경이 된 우지 일대"],
+    planb:["더우면 니시키시장·교토국립박물관·오사카 수족관","비 오면 지하상가와 백화점 식품관"],
+    good:["항공권이 가장 저렴하고 편수가 많음","문화재가 압도적으로 많음","도시 간 이동이 30분 안팎","음식 선택지가 넓음"],
+    bad:["8월에 가장 더움(분지)","관광객이 매우 많음","온천은 약한 편","한국인에게 가장 익숙한 코스"]
+  },
+  {
+    id:"sanin", name:"산인", air:"요나고 · 이즈모", temp:"31~32도", days:"3~5일",
+    line:"일본 신화의 무대와 국보 성, 오래된 온천. 관광객이 확연히 적다.",
+    s:{food:3,onsen:5,herit:4,nat:4,city:1,anime:4,cool:3,cost:4,easy:2},
+    stops:[
+      {t:"이즈모타이샤",x:"일본 신화의 총본산. 『고사기』의 무대",o:false},
+      {t:"마쓰에",x:"현존 천수이자 국보인 마쓰에성, 호리카와 유람선",o:false},
+      {t:"다마쓰쿠리온천",x:"『이즈모국 풍토기』에 나오는 최고(最古)급 온천",o:true},
+      {t:"아다치미술관",x:"일본 정원 랭킹 20년 연속 1위",o:false},
+      {t:"돗토리 사구",x:"일본에 사막 같은 풍경이 있다는 반전",o:false}
+    ],
+    air2:["요나고는 에어서울이 매일 운항하는 LCC 노선","요나고 IN / 오카야마 경유 OUT 등 변형이 쉬움","요나고에서 오카야마까지 특급 2시간"],
+    seichi:["『게게게의 기타로』 사카이미나토 미즈키 시게루 로드","『명탐정 코난』 돗토리 호쿠에이초 코난 마을(작가 고향)"],
+    planb:["더우면 아다치미술관·시마네현립미술관","비 오면 마쓰에성 내부와 온천"],
+    good:["국보 마쓰에성과 이즈모타이샤","다마쓰쿠리·가이케 등 온천이 강함","관광객이 적어 한적함","LCC 노선이라 항공료가 낮음"],
+    bad:["지역 내 열차 편수가 적음","대도시 편의시설이 거의 없음","다른 지역과 엮기가 번거로움","음식은 특색이 강하지 않음"]
+  },
+  {
+    id:"sanyo", name:"산요 · 세토우치", air:"히로시마 · 오카야마", temp:"32~33도", days:"3~5일",
+    line:"세계유산 두 곳과 바다 풍경. 신칸센이 지나가 이동이 수월하다.",
+    s:{food:4,onsen:2,herit:4,nat:4,city:3,anime:3,cool:2,cost:4,easy:4},
+    stops:[
+      {t:"히로시마",x:"평화기념공원, 오코노미야키",o:false},
+      {t:"미야지마",x:"바다에 선 이쓰쿠시마 신사 도리이",o:false},
+      {t:"구라시키",x:"운하와 흰 벽 창고 거리(비칸 지구)",o:false},
+      {t:"오노미치",x:"언덕길과 고양이, 시마나미 해도 자전거길",o:false},
+      {t:"오카야마",x:"고라쿠엔. 일본 3대 정원 중 하나",o:false}
+    ],
+    air2:["히로시마·오카야마 모두 직항이 있으나 편수는 적음","오사카 IN 후 신칸센으로 붙이는 방법이 저렴할 때가 많음","오카야마에서 시코쿠까지 마린라이너 55분"],
+    seichi:["『이 세상의 한구석에』 히로시마·구레","『시간을 달리는 소녀』 오노미치 언덕길"],
+    planb:["더우면 오하라미술관, 히로시마 평화기념자료관","비 오면 구라시키 비칸 지구 실내 상점"],
+    good:["세계유산 두 곳(원폭돔·이쓰쿠시마)","신칸센으로 이동이 빠름","세토내해 바다 풍경","시코쿠와 엮기 쉬움"],
+    bad:["온천은 약한 편","여름에 덥고 습함","미야지마는 매우 붐빔","숙박 거점을 정하기 애매함"]
+  },
+  {
+    id:"shikoku", name:"시코쿠", air:"다카마쓰 · 마쓰야마", temp:"32~33도", days:"4~6일",
+    line:"우동과 예술섬, 그리고 오래된 온천. 섬 하나가 통째로 코스다.",
+    s:{food:4,onsen:4,herit:3,nat:4,city:1,anime:3,cool:2,cost:4,easy:3},
+    stops:[
+      {t:"다카마쓰",x:"사누키 우동 순례, 리쓰린 공원",o:false},
+      {t:"나오시마",x:"지추미술관, 이우환미술관. 예약 필수·월요일 휴관",o:false},
+      {t:"마쓰야마",x:"도고온천 본관, 현존 천수 마쓰야마성",o:true},
+      {t:"고토히라",x:"곤피라궁. 계단 785개",o:false},
+      {t:"이야 계곡",x:"덩굴다리와 협곡. 도쿠시마 산간",o:false}
+    ],
+    air2:["다카마쓰·마쓰야마 모두 LCC 직항이 있어 저렴","다카마쓰 IN / 마쓰야마 OUT 오픈조가 깔끔","오카야마 경유로 산인·산요와 이을 수 있음"],
+    seichi:["도고온천 본관은 미야자키 감독이 참고 대상으로 언급한 곳","『언덕길의 아폴론』 등 세토내해 배경 작품"],
+    planb:["더우면 나오시마·오쓰카국제미술관 등 실내","비 오면 도고온천에서 하루 늘어지기"],
+    good:["도고온천과 우동을 한 번에","나오시마 등 예술섬","현존 천수 성이 두 곳","항공료가 저렴한 편"],
+    bad:["여름에 덥고 습함","섬 안 열차가 느림","대도시 편의는 없음","나오시마 예약을 미리 해야 함"]
+  },
+  {
+    id:"kyushu-n", name:"규슈 북부", air:"후쿠오카 · 기타큐슈", temp:"33~34도", days:"3~5일",
+    line:"온천과 음식이 촘촘하고 항공편이 많다. 한국에서 가장 가깝다.",
+    s:{food:5,onsen:5,herit:3,nat:3,city:4,anime:4,cool:1,cost:5,easy:4},
+    stops:[
+      {t:"후쿠오카",x:"하카타 라멘, 모츠나베, 나카스 포장마차",o:false},
+      {t:"유후인",x:"료칸과 긴린코 호수. 온천 마을",o:true},
+      {t:"벳푸",x:"지옥순례와 모래찜질",o:true},
+      {t:"나가사키",x:"데지마, 오우라 천주당, 짬뽕과 카스텔라",o:false},
+      {t:"모지코",x:"다이쇼 시대 항구 건축, 간몬 해협 도보 터널",o:false}
+    ],
+    air2:["후쿠오카는 비행 1시간대에 편수가 가장 많음","성수기에도 왕복 20만원대가 나오는 편","고쿠라·하카타가 신칸센 16분이라 함께 묶기 좋음"],
+    seichi:["다자이후 카마도 신사는 『귀멸의 칼날』 팬들이 찾는 곳(공식 배경은 아님)","『시간을 달리는 소녀』 원작자의 규슈 배경 작품들"],
+    planb:["더우면 캐널시티·하카타역 지하상가","비 오면 벳푸 온천과 실내 지옥순례"],
+    good:["한국에서 비행 1시간대","항공권이 가장 저렴","유후인·벳푸 등 온천이 밀집","라멘과 해산물이 강함"],
+    bad:["8월에 매우 덥고 습함","태풍 경로에 자주 걸림","문화재는 중간 수준","한국인 관광객이 많음"]
+  },
+  {
+    id:"kyushu-s", name:"규슈 남부", air:"가고시마 · 미야자키", temp:"32~33도", days:"4~6일",
+    line:"화산과 원시림, 강한 온천. 자연 풍경으로는 손꼽히지만 이동이 길다.",
+    s:{food:4,onsen:5,herit:2,nat:5,city:2,anime:4,cool:1,cost:3,easy:2},
+    stops:[
+      {t:"가고시마",x:"사쿠라지마 화산, 흑돼지 요리",o:false},
+      {t:"이부스키",x:"모래찜질 온천. 가고시마에서 50분",o:true},
+      {t:"야쿠시마",x:"수천 년 삼나무 원시림. 세계자연유산",o:false},
+      {t:"다카치호",x:"협곡과 건국신화의 무대",o:false},
+      {t:"기리시마",x:"화산 온천과 등산로",o:true}
+    ],
+    air2:["가고시마·미야자키 직항은 편수가 적어 요일 제약이 큼","후쿠오카 IN 후 신칸센으로 내려가는 방법도 있음","야쿠시마는 고속선이나 국내선을 추가로 타야 함"],
+    seichi:["야쿠시마 시라타니운스이쿄는 『모노노케 히메』 배경 자료가 된 숲","다카치호는 일본 건국신화의 무대"],
+    planb:["비 오면 이부스키 모래찜질과 온천","야쿠시마는 우천 시 결항이 잦아 여유일이 필요"],
+    good:["화산과 원시림 등 자연이 압도적","온천의 종류가 다양함","흑돼지·망고 등 특산이 뚜렷","관광객이 적음"],
+    bad:["이동 거리가 길고 대중교통이 드묾","8월 더위와 태풍 영향이 큼","문화재는 적음","직항이 제한적"]
+  },
+  {
+    id:"okinawa", name:"오키나와", air:"나하 · 이시가키", temp:"31~32도", days:"4~6일",
+    line:"바다가 전부다. 본토와는 문화도 음식도 다른 곳.",
+    s:{food:3,onsen:1,herit:2,nat:5,city:2,anime:2,cool:2,cost:3,easy:3},
+    stops:[
+      {t:"나하",x:"국제거리, 슈리성(복원 진행 중)",o:false},
+      {t:"추라우미 수족관",x:"고래상어 수조. 본섬 북부",o:false},
+      {t:"고우리섬",x:"에메랄드빛 바다와 다리 드라이브",o:false},
+      {t:"이시가키·다케토미",x:"본섬보다 맑은 바다, 물소수레 마을",o:false},
+      {t:"자마미",x:"케라마 블루로 불리는 바다. 페리 50분",o:false}
+    ],
+    air2:["나하 직항은 편수가 많고 비행 2시간 20분","이시가키는 나하에서 국내선을 한 번 더 타야 함","태풍 시즌이라 결항 대비가 필요"],
+    seichi:["류큐 왕국 유적군이 세계유산으로 등재돼 있음","본토 애니 배경지는 많지 않음"],
+    planb:["비바람이면 추라우미 수족관과 실내 시설","태풍 예보 시 일정 전체를 앞뒤로 옮길 각오 필요"],
+    good:["바다 색이 일본에서 가장 맑음","본토와 다른 류큐 문화","해양 액티비티가 다양함","본섬은 최고기온이 의외로 낮음"],
+    bad:["온천이 사실상 없음","태풍 시즌이라 결항 위험","렌터카가 사실상 필수","문화재·전통 볼거리는 적음"]
+  }
+];
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+let people = [], pid = 0;
+
+function addPerson(name, w){
+  const d = {}; CRIT.forEach(c=>d[c.k]=3);
+  people.push({id:++pid, name: name || `친구 ${people.length}`, w: w || d});
+  drawPeople(); score();
+}
+
+function drawPeople(){
+  $('#people').innerHTML = people.map(p=>`
+    <div class="person">
+      <div class="person-top">
+        <input type="text" value="${esc(p.name)}" aria-label="이름" data-n="${p.id}">
+        ${people.length>1?`<button type="button" class="rm" data-rm="${p.id}" aria-label="빼기">×</button>`:''}
+      </div>
+      <div class="presets">
+        ${Object.keys(PRESETS).map(k=>`<button type="button" class="pre" data-pre="${k}" data-p="${p.id}">${k}</button>`).join('')}
+      </div>
+      <div class="sliders">
+      ${CRIT.map(c=>`
+        <div class="slider">
+          <div class="lab"><span>${c.name}</span><span class="val" id="v${p.id}${c.k}">${p.w[c.k]}</span></div>
+          <input type="range" min="0" max="5" step="1" value="${p.w[c.k]}" data-p="${p.id}" data-k="${c.k}" aria-label="${c.name} 중요도">
+        </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function score(){
+  const t = R.map(r=>{
+    let num=0, den=0;
+    people.forEach(p=>CRIT.forEach(c=>{ num += p.w[c.k]*r.s[c.k]; den += p.w[c.k]*5; }));
+    return {r, pct: den ? Math.round(num/den*100) : 0};
+  }).sort((a,b)=>b.pct-a.pct);
+
+  const top = t[0].pct;
+  $('#rank').innerHTML = t.map((x,i)=>`
+    <button type="button" class="rank${x.pct===top&&top>0?' win':''}" data-go="${x.r.id}">
+      <div class="rank-top">
+        <span class="rank-no">${String(i+1).padStart(2,'0')}</span>
+        <span class="rank-name">${esc(x.r.name)}</span>
+        ${x.pct===top&&top>0?'<span class="rank-win">추천</span>':''}
+        <span class="rank-pct">${x.pct}%</span>
+      </div>
+      <div class="bar"><i style="width:${x.pct}%"></i></div>
+      <div class="rank-sub">${esc(x.r.air)} · 8월 하순 ${esc(x.r.temp)} · 권장 ${esc(x.r.days)}</div>
+    </button>`).join('');
+}
+
+const ul = a => `<ul>${a.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`;
+
+$('#details').innerHTML = R.map(r=>`
+  <details class="route" id="r-${r.id}">
+    <summary>${esc(r.name)} <em>${esc(r.air)}</em></summary>
+    <div class="rbody">
+      <p class="tagline">${esc(r.line)}</p>
+      <div class="scores">${CRIT.map(c=>`<span class="sc">${c.name} <b>${r.s[c.k]}</b></span>`).join('')}</div>
+      <div class="line">
+        ${r.stops.map(s=>`<div class="stop${s.o?' onsen':''}">
+          <div class="t">${esc(s.t)}</div><div class="x">${esc(s.x)}</div></div>`).join('')}
+      </div>
+      <div class="note air"><h5>항공 · 접근</h5>${ul(r.air2)}</div>
+      <div class="note seichi"><h5>애니 · 콘텐츠 성지</h5>${ul(r.seichi)}</div>
+      <div class="note planb"><h5>플랜 B · 폭염과 비</h5>${ul(r.planb)}</div>
+      <div class="pc">
+        <div><h5>좋은 점</h5><ul class="good">${r.good.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>
+        <div><h5>아쉬운 점</h5><ul class="bad">${r.bad.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>
+      </div>
+    </div>
+  </details>`).join('');
+
+$('#people').addEventListener('input', e=>{
+  const el = e.target;
+  if(el.type === 'range'){
+    const p = people.find(x=>x.id === +el.dataset.p);
+    p.w[el.dataset.k] = +el.value;
+    document.getElementById('v'+p.id+el.dataset.k).textContent = el.value;
+    score();
+  } else if(el.dataset.n){
+    people.find(x=>x.id === +el.dataset.n).name = el.value;
+  }
+});
+$('#people').addEventListener('click', e=>{
+  const pre = e.target.closest('[data-pre]');
+  if(pre){
+    const p = people.find(x=>x.id === +pre.dataset.p);
+    p.w = Object.assign({}, PRESETS[pre.dataset.pre]);
+    drawPeople(); score();
+    return;
+  }
+  const b = e.target.closest('[data-rm]');
+  if(b){
+    people = people.filter(x=>x.id !== +b.dataset.rm);
+    drawPeople(); score();
+  }
+});
+$('#add').addEventListener('click', ()=>{ if(people.length<6) addPerson(); });
+$('#rank').addEventListener('click', e=>{
+  const b = e.target.closest('[data-go]');
+  if(!b) return;
+  const d = document.getElementById('r-'+b.dataset.go);
+  document.querySelectorAll('details.route').forEach(x=>{ if(x!==d) x.open=false; });
+  d.open = true;
+  d.scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+addPerson("나", {food:5,onsen:4,herit:3,nat:3,city:2,anime:3,cool:2,cost:3,easy:1});
+</script>
+</body>
+</html>

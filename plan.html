@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>일본 여행 일정 플래너 · 비행기 시간 반영</title>
+<style>
+  :root{
+    --sumi:#191E26; --ai:#26456F; --ai-soft:#3E6DA8; --asagi:#7FA9C4;
+    --karashi:#C08A2E; --paper:#EDEBE5; --paper-2:#F7F6F2;
+    --rule:#D3CFC5; --muted:#6C6A64; --alert:#A8442F; --ok:#3F7A5A;
+    --mono: ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic","맑은 고딕",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--paper);color:var(--sumi);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:0 20px 80px}
+
+  .board{background:var(--sumi);color:var(--paper-2);padding:26px 20px 22px;border-bottom:3px solid var(--karashi);margin-bottom:30px}
+  .board-inner{max-width:840px;margin:0 auto}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--asagi);text-transform:uppercase}
+  .board h1{font-size:clamp(23px,5vw,32px);font-weight:800;letter-spacing:-.02em;margin:6px 0 8px}
+  .board p{margin:0;color:#A9B4BF;font-size:14px;max-width:58ch}
+
+  h2.sec{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--muted);
+    text-transform:uppercase;font-weight:400;margin:34px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--rule)}
+
+  .form{background:var(--paper-2);border:1px solid var(--rule);padding:16px 18px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:14px}
+  label.f{display:block}
+  label.f > span{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
+  input,select{width:100%;background:var(--paper);border:1px solid var(--rule);border-radius:2px;
+    padding:8px 10px;font-family:var(--sans);font-size:14px;color:var(--sumi)}
+  input[type=time],input[type=date]{font-family:var(--mono)}
+  input:focus,select:focus{outline:2px solid var(--ai-soft);outline-offset:1px}
+  .wide{grid-column:1/-1}
+  .sub{grid-column:1/-1;font-size:12.5px;color:var(--muted);margin-top:-2px}
+
+  .calc{background:var(--sumi);color:var(--paper-2);padding:16px 18px;margin-top:16px}
+  .calc h4{margin:0 0 10px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--asagi);text-transform:uppercase;font-weight:400}
+  .calcrow{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid #2C333D;font-size:14px}
+  .calcrow:last-child{border-bottom:0}
+  .calcrow b{font-family:var(--mono);white-space:nowrap}
+  .calcrow.hi b{color:var(--karashi)}
+
+  .warn{border-left:3px solid var(--alert);background:#F6EDEA;padding:11px 14px;margin-top:14px;font-size:14px}
+  .good{border-left:3px solid var(--ok);background:#EDF3EF;padding:11px 14px;margin-top:14px;font-size:14px}
+
+  .line{position:relative;padding-left:36px;margin-top:20px}
+  .line::before{content:"";position:absolute;left:7px;top:10px;bottom:10px;width:2px;background:var(--ai-soft)}
+  .day{position:relative;margin-bottom:22px;background:var(--paper-2);border:1px solid var(--rule);padding:14px 16px}
+  .day::before{content:"";position:absolute;left:-35px;top:16px;width:12px;height:12px;border-radius:50%;
+    background:var(--paper);border:2.5px solid var(--ai)}
+  .day.onsen::before{background:var(--karashi);border-color:var(--karashi)}
+  .day.move::before{background:var(--ai);border-color:var(--ai)}
+  .dhead{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:8px}
+  .dnum{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--muted)}
+  .dtitle{font-size:17px;font-weight:700;letter-spacing:-.01em}
+  .dstay{margin-left:auto;font-size:12px;font-family:var(--mono);color:var(--ai);border:1px solid var(--rule);padding:2px 7px}
+  ul.items{margin:0;padding-left:0;list-style:none}
+  ul.items li{display:grid;grid-template-columns:62px 1fr;gap:10px;padding:4px 0;font-size:14px;align-items:baseline}
+  ul.items li .tm{font-family:var(--mono);font-size:12px;color:var(--ai);white-space:nowrap}
+  ul.items li .tm.dash{color:var(--muted)}
+  .dnote{margin-top:9px;padding-top:9px;border-top:1px dashed var(--rule);font-size:13px;color:var(--muted)}
+
+  .foot{margin-top:34px;padding-top:14px;border-top:1px solid var(--rule);font-size:13px;color:var(--muted)}
+  @media (max-width:560px){ul.items li{grid-template-columns:56px 1fr}}
+</style>
+</head>
+<body>
+
+<header class="board">
+  <div class="board-inner">
+    <div class="eyebrow">일본 11개 권역 · 비행기 시간 자동 반영</div>
+    <h1>도착·출발 시각에 맞춘 일정표</h1>
+    <p>지역과 비행기 시각을 넣으면 첫날 실제로 쓸 수 있는 시간과 마지막 날 거점을 떠나야 하는 시각이 계산되고, 남는 시간에 맞는 코스가 채워집니다.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <h2 class="sec">여행 정보</h2>
+  <div class="form">
+    <div class="grid">
+      <label class="f wide"><span>지역</span><select id="region"></select></label>
+      <label class="f"><span>출국일 (한국 → 일본)</span><input type="date" id="d1" value="2026-08-23"></label>
+      <label class="f"><span>일본 도착 시각</span><input type="time" id="t1" value="15:00"></label>
+      <label class="f"><span>도착 공항</span><select id="a1"></select></label>
+      <label class="f"><span>귀국일</span><input type="date" id="d2" value="2026-08-28"></label>
+      <label class="f"><span>일본 출발 시각</span><input type="time" id="t2" value="18:00"></label>
+      <label class="f"><span>출발 공항</span><select id="a2"></select></label>
+      <div class="sub">도착 공항과 출발 공항을 다르게 고르면 되돌아오지 않는 오픈조 일정이 됩니다.</div>
+    </div>
+    <div class="calc" id="calc"></div>
+    <div id="alerts"></div>
+  </div>
+
+  <h2 class="sec">일정표</h2>
+  <div class="line" id="plan"></div>
+
+  <p class="foot">소요 시간은 평시 기준의 어림값입니다. 신칸센·재래선·버스 시각은 출발 전 실제 시각표로 다시 확인하세요. 국제선 수속은 출발 2시간 전 도착으로 계산했습니다.</p>
+</div>
+
+<script>
+/* ─── 데이터 ───
+   airports: 코드별 { name, nyu(입국수속·수하물), in{t,how}(공항→거점), out(거점→공항) }
+   evening : 거점 도시의 저녁 후보 { n, move, need, last, note }
+   days    : 중간 날 모듈. 앞에서부터 순서대로 채움
+   morning : 마지막 날 오전에 할 것
+*/
+const REGIONS = [
+{ id:"tohoku", name:"도호쿠 (센다이·긴잔온천)", base:"센다이",
+  airports:{
+    SDJ:{name:"센다이", nyu:45, in:{t:25,how:"센다이공항 액세스선 25분"}, out:35},
+    NRT:{name:"나리타 (도쿄 경유)", nyu:75, in:{t:230,how:"스카이라이너 41분 + 도호쿠 신칸센 1시간 35분"}, out:210},
+    HND:{name:"하네다 (도쿄 경유)", nyu:60, in:{t:190,how:"게이큐·JR + 도호쿠 신칸센"}, out:180}
+  },
+  evening:[
+    {n:"규탄 정식 첫 끼",move:5,need:70,last:20*60,note:"센다이역 3층 규탄 거리"},
+    {n:"조젠지도리 케야키 가로수길",move:10,need:50,last:21*60,note:"저녁에 조명이 켜집니다"},
+    {n:"센다이성터 야경",move:25,need:70,last:19*60,note:"시가지가 내려다보입니다"},
+    {n:"고쿠분초 이자카야",move:8,need:90,last:22*60,note:"센다이에서 가장 번화한 거리"}],
+  days:[
+    {t:"마쓰시마",stay:"센다이",cls:"",items:[["08:40","센다이역 출발 · JR센세키선 40분"],["09:30","유람선으로 섬 사이 항해"],["11:00","즈이간지 · 본당이 국보"],["12:30","굴 또는 아나고동 점심"],["16:00","센다이 복귀"]],note:"즈이간지는 15:30 마지막 입장입니다."},
+    {t:"야마데라와 긴잔온천",stay:"긴잔온천",cls:"onsen",items:[["07:30","큰 짐은 센다이 호텔에 맡기기"],["08:30","센다이 → 야마데라 재래선 1시간"],["09:30","계단 1015개, 삼나무 그늘"],["12:30","야마가타 점심 · 다마콘냐쿠"],["15:00","오이시다역 → 버스 35분 → 긴잔"],["18:00","가이세키 · 오바나자와규"],["19:30","가스등 켜진 온천가 산책"]],note:"해질녘 도착이 핵심입니다. 늦어도 17시까지."},
+    {t:"히라이즈미",stay:"센다이",cls:"",items:[["06:30","아침 온천 · 시로가네 폭포 도보 10분"],["10:00","체크아웃"],["13:30","주손지 금색당 · 세계유산"],["17:00","센다이 복귀 · 규탄 2차"]],note:"이른 아침의 긴잔이 가장 조용합니다."},
+    {t:"모리오카",stay:"센다이",cls:"",items:[["09:00","신칸센 40분"],["11:30","냉면 또는 자자멘"],["14:00","이와테공원과 옛 거리"],["17:30","센다이 복귀"]],note:"완코소바는 예약이 필요한 곳이 많습니다."},
+    {t:"자오와 여우마을",stay:"센다이",cls:"",items:[["08:30","신칸센 12분 · 시로이시자오"],["09:30","자오 여우마을 · 택시 20분"],["13:00","시로이시성"],["16:00","센다이 복귀"]],note:"여름 여우는 털갈이 후라 겨울 사진과 다릅니다."}],
+  morning:[["08:30","센다이 아침시장"],["09:30","즌다모찌 등 기내 간식"]] },
+
+{ id:"hokkaido", name:"홋카이도 (삿포로·노보리베쓰)", base:"삿포로",
+  airports:{
+    CTS:{name:"신치토세", nyu:55, in:{t:45,how:"쾌속 에어포트 37분"}, out:55},
+    HKD:{name:"하코다테", nyu:40, in:{t:230,how:"특급 홋토 3시간 30분"}, out:230}
+  },
+  evening:[
+    {n:"징기스칸 저녁",move:10,need:80,last:21*60,note:"삿포로 맥주원 또는 스스키노"},
+    {n:"스스키노 밤거리",move:8,need:70,last:23*60,note:"니카 간판이 상징입니다"},
+    {n:"오도리공원과 시계탑",move:6,need:50,last:21*60,note:"TV타워 조명이 켜집니다"},
+    {n:"미소라멘 골목",move:8,need:60,last:22*60,note:"라멘요코초"}],
+  days:[
+    {t:"오타루",stay:"삿포로",cls:"",items:[["09:00","쾌속 32분"],["10:00","운하와 창고 거리"],["12:00","스시야도리에서 점심"],["14:30","유리공방과 오르골당"],["17:30","삿포로 복귀"]],note:"운하는 해질녘 가스등이 켜집니다."},
+    {t:"노보리베쓰 온천",stay:"노보리베쓰",cls:"onsen",items:[["09:30","특급 1시간 10분"],["11:30","시라오이 우포포이 · 아이누 문화"],["15:00","지옥계곡 산책"],["18:00","료칸 저녁과 온천"]],note:"유황 냄새가 강하니 은장신구는 빼두세요."},
+    {t:"하코다테",stay:"하코다테",cls:"",items:[["09:00","특급 3시간 30분"],["13:30","모토마치 개항기 건축"],["17:00","하코다테산 야경"],["19:30","이자카야 저녁"]],note:"야경은 일몰 30분 뒤가 가장 좋습니다."},
+    {t:"고료카쿠와 아침시장",stay:"삿포로",cls:"",items:[["07:00","하코다테 아침시장 · 해산물덮밥"],["09:30","고료카쿠 타워"],["13:00","삿포로 방면 이동"]],note:"이동이 길어 여유를 두세요."},
+    {t:"비에이·후라노",stay:"삿포로",cls:"",items:[["08:00","특급 2시간"],["10:30","패치워크 로드 구릉"],["14:00","아오이케 연못"],["18:00","삿포로 복귀"]],note:"렌터카나 관광버스가 편합니다."}],
+  morning:[["08:30","니조시장 해산물 아침"],["09:30","선물 구입"]] },
+
+{ id:"kanto", name:"간토 (도쿄·하코네·닛코)", base:"도쿄",
+  airports:{
+    NRT:{name:"나리타", nyu:75, in:{t:55,how:"게이세이 스카이라이너 41분"}, out:100},
+    HND:{name:"하네다", nyu:60, in:{t:45,how:"게이큐·모노레일"}, out:80}
+  },
+  evening:[
+    {n:"아사쿠사 센소지와 나카미세",move:15,need:90,last:19*60,note:"경내는 밤에도 조명이 켜집니다"},
+    {n:"도쿄 스카이트리 전망대",move:25,need:120,last:20*60,note:"마지막 입장 21시"},
+    {n:"아메요코 시장 저녁",move:5,need:90,last:20*60+30,note:"이자카야는 늦게까지"},
+    {n:"시부야 스크램블과 야경",move:30,need:90,last:22*60,note:"시부야 스카이는 예약제"},
+    {n:"도쿄역 마루노우치 야경",move:20,need:50,last:22*60,note:"붉은 벽돌 역사"}],
+  days:[
+    {t:"하코네",stay:"하코네",cls:"onsen",items:[["08:30","신주쿠에서 로망스카 1시간 30분"],["11:00","하코네 유모토와 조각의 숲"],["14:00","아시노코 유람선과 오와쿠다니"],["18:00","료칸 온천과 저녁"]],note:"하코네 프리패스가 유리합니다."},
+    {t:"닛코",stay:"도쿄",cls:"",items:[["07:30","특급 2시간"],["10:00","도쇼구 · 세계유산"],["13:30","주젠지 호수와 게곤 폭포"],["18:30","도쿄 복귀"]],note:"산간이라 시내보다 서늘합니다."},
+    {t:"가마쿠라",stay:"도쿄",cls:"",items:[["09:00","전철 1시간"],["10:30","쓰루가오카하치만구"],["13:00","에노덴 타고 해변으로"],["15:00","가마쿠라코코마에역 건널목"],["18:00","도쿄 복귀"]],note:"주말에는 에노덴이 매우 붐빕니다."},
+    {t:"도쿄 시내",stay:"도쿄",cls:"",items:[["09:30","메이지신궁과 하라주쿠"],["12:30","시부야 점심"],["15:00","긴자 또는 아키하바라"],["19:00","이자카야 저녁"]],note:"한낮에는 실내 위주로 도세요."},
+    {t:"가와고에",stay:"도쿄",cls:"",items:[["09:30","전철 30분"],["10:30","창고 거리와 종탑"],["13:00","장어 또는 고구마 요리"],["16:30","도쿄 복귀"]],note:"작은 에도라고 불립니다."}],
+  morning:[["09:00","숙소 근처 산책과 선물"],["10:00","역 구내에서 에키벤 구입"]] },
+
+{ id:"chubu", name:"중부·호쿠리쿠 (다카야마·가나자와)", base:"나고야",
+  airports:{
+    NGO:{name:"주부(나고야)", nyu:50, in:{t:35,how:"뮤스카이 28분"}, out:45},
+    KMQ:{name:"고마쓰(가나자와)", nyu:40, in:{t:45,how:"공항버스 40분"}, out:50},
+    KIX:{name:"간사이 (경유)", nyu:60, in:{t:150,how:"하루카+신칸센"}, out:150}
+  },
+  evening:[
+    {n:"나고야 히쓰마부시 저녁",move:8,need:80,last:20*60+30,note:"장어를 세 가지 방식으로"},
+    {n:"미소카쓰와 데바사키",move:8,need:70,last:21*60,note:"나고야 명물"},
+    {n:"오아시스21과 TV타워 야경",move:12,need:60,last:22*60,note:"사카에 지구"}],
+  days:[
+    {t:"게로온천",stay:"게로온천",cls:"onsen",items:[["09:30","특급 히다 1시간 40분"],["11:30","온천가 산책과 족욕"],["15:00","료칸 체크인"],["18:00","가이세키 저녁"]],note:"구사쓰·아리마와 함께 일본 3대 명천입니다."},
+    {t:"다카야마",stay:"다카야마",cls:"",items:[["08:30","특급 45분"],["09:30","미야가와 아침시장"],["11:00","산마치스지 옛 거리"],["14:00","다카야마 진야"],["18:00","히다규 저녁"]],note:"해발 570m라 아침저녁이 서늘합니다."},
+    {t:"시라카와고와 가나자와",stay:"가나자와",cls:"",items:[["08:30","버스 50분"],["09:30","시로야마 전망대"],["11:00","갓쇼즈쿠리 마을 · 세계유산"],["14:00","버스 1시간 15분"],["17:00","히가시차야가이 등롱"]],note:"낮 12~16시가 가장 붐빕니다."},
+    {t:"가나자와",stay:"가나자와",cls:"",items:[["07:00","겐로쿠엔 · 이른 아침이 한적"],["09:30","가나자와성"],["11:30","오미초시장 해산물"],["14:00","21세기미술관"],["17:00","나가마치 무사 저택 거리"]],note:"겐로쿠엔은 오전 7시에 엽니다."},
+    {t:"노토 방면 또는 자유",stay:"가나자와",cls:"",items:[["09:00","가나자와 시내 자유"],["13:00","가가온천향 당일 온천"],["18:00","가나자와 복귀"]],note:"노토 반도 북부는 복구가 진행 중입니다."}],
+  morning:[["09:00","오미초시장에서 마지막 해산물"],["10:00","가나자와역 쓰즈미몬 사진"]] },
+
+{ id:"kansai", name:"간사이 (교토·오사카·나라)", base:"교토",
+  airports:{ KIX:{name:"간사이", nyu:60, in:{t:90,how:"하루카 특급 75분"}, out:105} },
+  evening:[
+    {n:"기온과 하나미코지 산책",move:15,need:70,last:21*60,note:"저녁 등불이 켜집니다"},
+    {n:"니시키시장과 가와라마치",move:12,need:80,last:19*60,note:"시장은 18시경 닫습니다"},
+    {n:"기요미즈데라 야간 참배",move:20,need:90,last:19*60,note:"시기에 따라 야간 개방"},
+    {n:"폰토초 이자카야",move:15,need:90,last:22*60,note:"강변 좁은 골목"}],
+  days:[
+    {t:"교토 동부",stay:"교토",cls:"",items:[["06:30","후시미이나리 · 이른 아침이 한적"],["09:30","기요미즈데라와 산넨자카"],["12:30","유도후 점심"],["15:00","난젠지와 철학의 길"],["18:00","기온 저녁"]],note:"한낮에는 실내와 그늘 위주로."},
+    {t:"아라시야마",stay:"교토",cls:"",items:[["08:00","대숲 · 아침이 가장 조용"],["09:30","덴류지 정원"],["12:00","유바 요리 점심"],["14:30","사가노 토롯코 열차"],["17:30","교토 복귀"]],note:"토롯코 열차는 예약을 권합니다."},
+    {t:"나라",stay:"교토",cls:"",items:[["09:00","급행 45분"],["10:00","도다이지 대불"],["12:00","가스가타이샤 등롱길"],["14:00","나라공원 사슴"],["17:30","교토 복귀"]],note:"사슴에게 먹이를 줄 때는 손을 조심하세요."},
+    {t:"오사카",stay:"오사카",cls:"",items:[["09:30","신쾌속 30분"],["10:30","오사카성과 니시노마루 정원"],["13:00","다코야키와 쿠시카츠"],["16:00","우메다 공중정원"],["19:00","도톤보리 야경"]],note:"오사카성 천수각은 계단이 많습니다."},
+    {t:"고베와 아리마온천",stay:"고베",cls:"onsen",items:[["09:00","전철 1시간"],["10:30","기타노 이진칸 거리"],["13:00","고베규 점심"],["15:30","아리마온천 · 금탕과 은탕"],["19:00","고베 야경"]],note:"아리마는 일본 3대 명천 중 하나입니다."}],
+  morning:[["09:00","교토역 이세탄 지하에서 선물"],["10:00","니시키시장 아침"]] },
+
+{ id:"sanin", name:"산인 (이즈모·마쓰에)", base:"마쓰에",
+  airports:{
+    YGJ:{name:"요나고", nyu:40, in:{t:50,how:"공항버스 45분"}, out:55},
+    IZO:{name:"이즈모", nyu:40, in:{t:45,how:"공항버스 35분"}, out:50}
+  },
+  evening:[
+    {n:"마쓰에성 해자 산책",move:10,need:50,last:19*60,note:"천수는 국보입니다"},
+    {n:"신지호 일몰",move:12,need:50,last:19*60,note:"일본 유수의 일몰 명소"},
+    {n:"이즈모소바 저녁",move:8,need:60,last:20*60,note:"세 단으로 나온 와리고소바"}],
+  days:[
+    {t:"이즈모타이샤",stay:"마쓰에",cls:"",items:[["08:30","특급 40분"],["09:30","일본 신화의 총본산"],["12:00","이즈모소바 점심"],["14:00","고대 이즈모 역사박물관"],["17:30","마쓰에 복귀"]],note:"참배는 두 번 절, 네 번 박수, 한 번 절입니다."},
+    {t:"아다치미술관과 마쓰에성",stay:"다마쓰쿠리온천",cls:"onsen",items:[["09:00","야스기 · 아다치미술관"],["12:30","마쓰에성 천수 · 국보"],["14:30","호리카와 유람선"],["16:30","다마쓰쿠리온천 체크인"],["18:00","가이세키 저녁"]],note:"아다치는 10~11시에 관광버스가 몰립니다."},
+    {t:"돗토리 사구",stay:"돗토리",cls:"",items:[["09:00","특급 1시간 30분"],["11:00","사구와 모래 미술관"],["14:00","우라도메 해안"],["18:00","해산물 저녁"]],note:"모래가 뜨거우니 신발을 꼭 신으세요."},
+    {t:"사카이미나토",stay:"마쓰에",cls:"",items:[["09:30","미즈키 시게루 로드"],["12:00","해산물 시장 점심"],["15:00","에시마 오하시 다리"],["17:30","마쓰에 복귀"]],note:"게게게의 기타로 요괴상 177개가 있습니다."}],
+  morning:[["09:00","마쓰에 시내 산책"],["10:00","와가시와 말차"]] },
+
+{ id:"sanyo", name:"산요·세토우치 (히로시마·구라시키)", base:"히로시마",
+  airports:{
+    HIJ:{name:"히로시마", nyu:40, in:{t:55,how:"리무진버스 50분"}, out:60},
+    OKJ:{name:"오카야마", nyu:40, in:{t:40,how:"공항버스 30분"}, out:45},
+    KIX:{name:"간사이 (경유)", nyu:60, in:{t:200,how:"하루카+산요 신칸센"}, out:200}
+  },
+  evening:[
+    {n:"오코노미야키 저녁",move:8,need:70,last:21*60,note:"히로시마식은 면이 들어갑니다"},
+    {n:"평화기념공원 야간 산책",move:10,need:50,last:21*60,note:"원폭돔이 조명을 받습니다"},
+    {n:"나가레카와 이자카야",move:10,need:90,last:22*60,note:"히로시마 최대 번화가"}],
+  days:[
+    {t:"미야지마",stay:"히로시마",cls:"",items:[["08:30","전철과 페리 50분"],["09:30","이쓰쿠시마 신사 · 세계유산"],["12:00","아나고메시 점심"],["14:00","미센 로프웨이"],["17:30","히로시마 복귀"]],note:"물때에 따라 도리이 모습이 다릅니다."},
+    {t:"구라시키",stay:"구라시키",cls:"",items:[["09:00","신칸센과 재래선 1시간 20분"],["10:30","비칸 지구 흰 벽 창고 거리"],["12:30","운하 나룻배"],["15:00","오하라미술관"],["18:00","구라시키 저녁"]],note:"오하라미술관은 월요일 휴관입니다."},
+    {t:"오노미치",stay:"히로시마",cls:"",items:[["09:00","재래선 1시간 30분"],["10:30","언덕길과 고양이의 길"],["12:30","오노미치 라멘"],["14:30","시마나미 해도 자전거"],["18:00","히로시마 복귀"]],note:"자전거는 대여점이 역 근처에 있습니다."},
+    {t:"히로시마 시내와 오카야마",stay:"히로시마",cls:"",items:[["09:00","평화기념자료관"],["12:00","히로시마성"],["14:30","오카야마 고라쿠엔 · 신칸센 35분"],["18:00","히로시마 복귀"]],note:"자료관은 감정적으로 무거우니 시간을 여유 있게."}],
+  morning:[["09:00","히로시마역 지하 선물 거리"],["10:00","모미지만주 구입"]] },
+
+{ id:"shikoku", name:"시코쿠 (다카마쓰·나오시마·도고온천)", base:"다카마쓰",
+  airports:{
+    TAK:{name:"다카마쓰", nyu:40, in:{t:50,how:"공항버스 45분"}, out:55},
+    MYJ:{name:"마쓰야마", nyu:40, in:{t:35,how:"공항버스 25분"}, out:45},
+    OKJ:{name:"오카야마 (경유)", nyu:40, in:{t:100,how:"공항버스+마린라이너"}, out:110}
+  },
+  evening:[
+    {n:"호네츠키도리 저녁",move:8,need:70,last:21*60,note:"뼈 붙은 닭다리 구이"},
+    {n:"다카마쓰 항구 산책",move:10,need:50,last:21*60,note:"세토내해 노을"},
+    {n:"우동 이자카야",move:8,need:80,last:21*60+30,note:"밤에 하는 우동집도 있습니다"}],
+  days:[
+    {t:"나오시마",stay:"다카마쓰",cls:"",items:[["08:00","다카마쓰항 페리 50분"],["10:00","지추미술관 · 예약 필수"],["12:30","섬 식당 점심"],["14:00","이우환미술관과 호박"],["17:30","다카마쓰 복귀"]],note:"월요일 휴관이 많으니 요일을 확인하세요."},
+    {t:"우동 순례와 리쓰린",stay:"다카마쓰",cls:"",items:[["07:00","리쓰린 공원 아침 산책"],["09:00","우동집 두세 곳 순례"],["13:00","야시마 전망대"],["17:00","다카마쓰 시내"]],note:"우동집은 대부분 낮 장사만 합니다."},
+    {t:"곤피라궁",stay:"다카마쓰",cls:"",items:[["08:30","전철 1시간"],["09:30","계단 785개 등반"],["12:30","사누키우동 점심"],["15:00","가나마루자 옛 극장"],["17:30","다카마쓰 복귀"]],note:"지팡이를 빌려주는 가게가 있습니다."},
+    {t:"마쓰야마와 도고온천",stay:"마쓰야마",cls:"onsen",items:[["09:00","특급 2시간 40분"],["12:30","마쓰야마성 로프웨이"],["15:00","도고온천 본관 입욕"],["18:00","봇짱열차와 상점가"],["20:00","야간 조명이 켜진 본관"]],note:"본관은 현존 천수와 함께 이 도시의 상징입니다."}],
+  morning:[["08:00","도고온천 아침탕"],["09:30","상점가에서 봇짱당고"]] },
+
+{ id:"kyushu-n", name:"규슈 북부 (후쿠오카·유후인·나가사키)", base:"후쿠오카",
+  airports:{
+    FUK:{name:"후쿠오카", nyu:40, in:{t:20,how:"지하철 11분"}, out:30},
+    KKJ:{name:"기타큐슈", nyu:40, in:{t:80,how:"버스+신칸센"}, out:85},
+    NGS:{name:"나가사키", nyu:40, in:{t:120,how:"공항버스+특급"}, out:120}
+  },
+  evening:[
+    {n:"나카스 포장마차 거리",move:10,need:90,last:23*60,note:"강변에 늘어선 야타이"},
+    {n:"하카타 라멘 저녁",move:8,need:60,last:23*60,note:"돈코쓰의 본고장"},
+    {n:"모츠나베 저녁",move:10,need:90,last:21*60+30,note:"후쿠오카 대표 전골"},
+    {n:"캐널시티 분수쇼",move:12,need:60,last:21*60,note:"실내라 더위를 피할 수 있습니다"}],
+  days:[
+    {t:"유후인",stay:"유후인",cls:"onsen",items:[["09:00","특급 유후인노모리 2시간 10분"],["11:30","유노쓰보 거리"],["13:00","점심과 카페"],["15:00","긴린코 호수"],["18:00","료칸 가이세키와 온천"]],note:"특급은 지정석 예약이 필요합니다."},
+    {t:"벳푸",stay:"벳푸",cls:"onsen",items:[["09:30","버스 1시간"],["10:30","지옥순례 · 일곱 곳"],["13:00","지고쿠무시 요리"],["15:30","모래찜질"],["18:30","온천 저녁"]],note:"모래찜질은 대기가 길 수 있습니다."},
+    {t:"나가사키",stay:"나가사키",cls:"",items:[["08:30","신칸센과 특급 1시간 30분"],["10:30","데지마와 오우라 천주당"],["13:00","나가사키 짬뽕"],["15:00","평화공원"],["19:00","이나사야마 야경"]],note:"야경은 세계 3대 야경으로 꼽힙니다."},
+    {t:"모지코와 시모노세키",stay:"후쿠오카",cls:"",items:[["09:00","신칸센 16분 후 환승"],["10:30","모지코 레트로 · 다이쇼 건축"],["12:30","야키카레 점심"],["14:00","간몬 해협 인도 터널 도보 780m"],["15:30","가라토 시장 복어"],["18:30","후쿠오카 복귀"]],note:"걸어서 규슈에서 혼슈로 건너갑니다."},
+    {t:"다자이후",stay:"후쿠오카",cls:"",items:[["09:30","전철 40분"],["10:30","다자이후 덴만구"],["12:30","우메가에모치"],["14:00","규슈국립박물관"],["17:00","후쿠오카 복귀"]],note:"학문의 신을 모시는 신사입니다."}],
+  morning:[["09:00","하카타역 지하 선물 거리"],["10:00","멘타이코와 히요코 구입"]] },
+
+{ id:"kyushu-s", name:"규슈 남부 (가고시마·이부스키)", base:"가고시마",
+  airports:{
+    KOJ:{name:"가고시마", nyu:40, in:{t:50,how:"공항버스 40분"}, out:55},
+    KMI:{name:"미야자키", nyu:40, in:{t:130,how:"특급 2시간"}, out:130}
+  },
+  evening:[
+    {n:"흑돼지 샤브샤브 저녁",move:8,need:80,last:21*60,note:"가고시마 대표 요리"},
+    {n:"덴몬칸 아케이드",move:6,need:60,last:21*60+30,note:"실내 상점가"},
+    {n:"사쿠라지마 조망",move:15,need:60,last:19*60,note:"화산이 정면에 보입니다"}],
+  days:[
+    {t:"사쿠라지마",stay:"가고시마",cls:"",items:[["09:00","페리 15분"],["10:00","유노히라 전망대"],["12:30","섬 특산 점심"],["14:30","무료 족욕탕"],["17:00","가고시마 복귀"]],note:"화산재가 날릴 수 있으니 모자를 챙기세요."},
+    {t:"이부스키",stay:"이부스키",cls:"onsen",items:[["09:30","특급 이부스키노타마테바코 50분"],["11:00","모래찜질 온천"],["13:30","점심과 해변 산책"],["16:00","이케다호"],["18:30","료칸 저녁"]],note:"모래찜질은 10분 정도가 적당합니다."},
+    {t:"야쿠시마",stay:"야쿠시마",cls:"",items:[["07:30","고속선 2시간"],["10:30","시라타니운스이쿄 원시림"],["14:00","야쿠스기 랜드"],["17:30","섬 숙소"]],note:"비가 잦으니 우비와 등산화가 필요합니다."},
+    {t:"기리시마",stay:"기리시마온천",cls:"onsen",items:[["09:00","특급 1시간"],["10:30","기리시마 신궁"],["13:00","화산 전망대"],["16:00","온천 료칸 체크인"]],note:"화산 활동에 따라 통제 구간이 있습니다."}],
+  morning:[["09:00","덴몬칸에서 선물"],["10:00","사쓰마아게 구입"]] },
+
+{ id:"okinawa", name:"오키나와 (나하·본섬)", base:"나하",
+  airports:{ OKA:{name:"나하", nyu:45, in:{t:30,how:"유이레일 15분"}, out:45},
+             ISG:{name:"이시가키", nyu:40, in:{t:180,how:"국내선 1시간 + 이동"}, out:180} },
+  evening:[
+    {n:"국제거리 산책과 저녁",move:8,need:90,last:22*60,note:"오키나와 소바와 아구 요리"},
+    {n:"슈리성 공원",move:20,need:80,last:17*60+30,note:"복원 공사가 진행 중입니다"},
+    {n:"마키시 공설시장",move:10,need:60,last:19*60,note:"산 생선을 2층에서 요리해 줍니다"}],
+  days:[
+    {t:"추라우미 수족관",stay:"나하",cls:"",items:[["08:30","고속버스 2시간 30분"],["11:00","고래상어 대수조"],["13:30","해양박공원 산책"],["16:00","고우리섬 다리"],["19:00","나하 복귀"]],note:"렌터카가 훨씬 편한 코스입니다."},
+    {t:"남부 해안",stay:"나하",cls:"",items:[["09:30","니라이카나이 다리"],["11:00","치넨미사키 공원"],["13:00","해변 카페 점심"],["15:00","평화기념공원"],["18:00","나하 복귀"]],note:"평화기념공원은 오키나와전 역사 공간입니다."},
+    {t:"이시가키·다케토미",stay:"이시가키",cls:"",items:[["08:00","국내선 1시간"],["10:30","다케토미섬 페리 15분"],["11:30","물소수레와 붉은 기와 마을"],["14:30","가비라만"],["18:00","이시가키 저녁"]],note:"본섬보다 바다가 맑습니다."},
+    {t:"자마미 또는 해양 액티비티",stay:"나하",cls:"",items:[["08:00","페리 50분"],["10:00","케라마 블루 스노클링"],["14:00","해변 휴식"],["17:30","나하 복귀"]],note:"파도가 높으면 결항합니다."}],
+  morning:[["09:00","국제거리에서 선물"],["10:00","베니이모타르트 구입"]] }
+];
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const toMin = t => { const [h,m]=t.split(':').map(Number); return h*60+m; };
+const fmt = m => { m=((m%1440)+1440)%1440; return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); };
+const dur = m => m>=60 ? `${Math.floor(m/60)}시간 ${m%60?m%60+'분':''}`.trim() : `${m}분`;
+const dstr = s => { const d=new Date(s); return isNaN(d)?'':`${d.getMonth()+1}/${d.getDate()} (${'일월화수목금토'[d.getDay()]})`; };
+const addDays = (s,n) => { const d=new Date(s); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+const nightsBetween = (a,b) => Math.round((new Date(b)-new Date(a))/86400000);
+
+$('#region').innerHTML = REGIONS.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join('');
+
+function fillAirports(){
+  const r = REGIONS.find(x=>x.id===$('#region').value);
+  const opts = Object.entries(r.airports).map(([c,a])=>`<option value="${c}">${esc(a.name)}</option>`).join('');
+  const keep1=$('#a1').value, keep2=$('#a2').value;
+  $('#a1').innerHTML=opts; $('#a2').innerHTML=opts;
+  if(r.airports[keep1]) $('#a1').value=keep1;
+  if(r.airports[keep2]) $('#a2').value=keep2;
+}
+
+function build(){
+  const r = REGIONS.find(x=>x.id===$('#region').value);
+  const d1=$('#d1').value, d2=$('#d2').value;
+  const t1=toMin($('#t1').value), t2=toMin($('#t2').value);
+  const A1=r.airports[$('#a1').value], A2=r.airports[$('#a2').value];
+  if(!A1||!A2) return;
+
+  const nights = Math.max(1, Math.min(12, nightsBetween(d1,d2)));
+
+  const baseArrive = t1 + A1.nyu + A1.in.t;
+  const freeStart = baseArrive + 20;
+  const freeMin = Math.max(0, (22*60+30) - freeStart);
+
+  const airportBy = t2 - 120;
+  const leaveBase = airportBy - A2.out;
+  const morning = leaveBase - 9*60;
+
+  $('#calc').innerHTML = `
+    <h4>자동 계산</h4>
+    <div class="calcrow"><span>입국 수속·수하물 (${esc(A1.name)})</span><b>${dur(A1.nyu)}</b></div>
+    <div class="calcrow"><span>공항 → ${esc(r.base)} · ${esc(A1.in.how)}</span><b>${dur(A1.in.t)}</b></div>
+    <div class="calcrow hi"><span>${esc(r.base)} 숙소 도착 예상</span><b>${fmt(baseArrive)}</b></div>
+    <div class="calcrow hi"><span>첫날 쓸 수 있는 시간</span><b>${freeMin>0?dur(freeMin):'없음'}</b></div>
+    <div class="calcrow"><span>귀국일 공항 도착 마감 (출발 2시간 전)</span><b>${fmt(airportBy)}</b></div>
+    <div class="calcrow"><span>${esc(r.base)} → ${esc(A2.name)}</span><b>${dur(A2.out)}</b></div>
+    <div class="calcrow hi"><span>${esc(r.base)}을(를) 떠나야 하는 시각</span><b>${fmt(leaveBase)}</b></div>
+    <div class="calcrow"><span>전체 일정</span><b>${nights}박 ${nights+1}일</b></div>`;
+
+  let al='';
+  if(freeMin <= 30) al += `<div class="warn"><b>첫날은 이동으로 끝납니다.</b> 숙소 도착이 ${fmt(baseArrive)}이라 관광 시간이 거의 없습니다. 가볍게 저녁만 하고 쉬세요.</div>`;
+  else if(freeMin >= 420) al += `<div class="good"><b>첫날 여유가 많습니다.</b> ${dur(freeMin)}을 쓸 수 있어 반나절 이상 돌아볼 수 있습니다.</div>`;
+  if(leaveBase < 8*60) al += `<div class="warn"><b>마지막 날 아침이 너무 이릅니다.</b> ${esc(r.base)}을(를) ${fmt(leaveBase)}에 떠나야 합니다. 전날 저녁에 공항 근처로 미리 이동해 1박 하는 편을 권합니다.</div>`;
+  else if(morning >= 150) al += `<div class="good"><b>마지막 날 오전이 넉넉합니다.</b> ${dur(morning)}가 남아 아침 일정을 하나 넣을 수 있습니다.</div>`;
+  if($('#a1').value !== $('#a2').value) al += `<div class="good"><b>오픈조 일정입니다.</b> ${esc(A1.name)}으로 들어와 ${esc(A2.name)}에서 나가므로 되돌아오는 구간이 없습니다.</div>`;
+  $('#alerts').innerHTML = al;
+
+  // 첫날 저녁 코스
+  const picks=[]; let cur=freeStart, budget=freeMin;
+  if(freeMin > 30){
+    for(const x of [...r.evening].sort((a,b)=>b.need-a.need)){
+      const cost = x.move + x.need;
+      if(cost <= budget && cur <= x.last && picks.length < 3){
+        picks.push({...x, at: cur + x.move}); cur += cost; budget -= cost;
+      }
+    }
+  }
+
+  const li = (t,x) => `<li><span class="tm${t?'':' dash'}">${t||'—'}</span><span>${x}</span></li>`;
+  const days = [];
+
+  days.push({cls:'move', d:dstr(d1), n:'DAY 01', t:`${r.base} 도착`, stay:r.base,
+    items:[
+      li(fmt(t1), `${esc(A1.name)} 도착 · 입국 수속과 수하물`),
+      li(fmt(t1+A1.nyu), `공항 출발 · ${esc(A1.in.how)}`),
+      li(fmt(baseArrive), `${esc(r.base)} 숙소 도착 · 체크인`),
+      ...(picks.length ? picks.map(p=>li(fmt(p.at), `${esc(p.n)} <span style="color:var(--muted)">— ${esc(p.note)}</span>`))
+                       : [li('', '무리하지 말고 숙소 근처에서 저녁만 해결')])
+    ],
+    note:'철도 패스를 쓴다면 오늘은 개시하지 않고 둘째 날부터 여는 편이 유리할 때가 많습니다.'});
+
+  const mid = nights - 1;
+  for(let i=0;i<mid;i++){
+    const m = r.days[i % r.days.length];
+    const extra = i >= r.days.length ? ' (반복 · 다른 곳으로 바꿔도 됩니다)' : '';
+    days.push({cls:m.cls, d:dstr(addDays(d1,i+1)), n:'DAY '+String(i+2).padStart(2,'0'),
+      t:m.t+extra, stay:m.stay, items:m.items.map(([a,b])=>li(a,esc(b))), note:m.note});
+  }
+
+  const last=[];
+  if(morning >= 150) r.morning.forEach(([a,b])=>last.push(li(a,esc(b))));
+  else if(morning > 30) last.push(li('', '시간이 빠듯하니 역이나 공항에서 선물만 사세요'));
+  else last.push(li('', '곧바로 공항으로 출발하세요'));
+  last.push(li(fmt(leaveBase), `${esc(r.base)} 출발 · ${esc(A2.name)}까지 ${dur(A2.out)}`));
+  last.push(li(fmt(airportBy), '공항 도착 · 수속'));
+  last.push(li(fmt(t2), '한국으로 출발'));
+
+  days.push({cls:'move', d:dstr(d2), n:'DAY '+String(nights+1).padStart(2,'0'), t:'귀국', stay:'—',
+    items:last, note:'공항 연결 열차나 버스가 패스 구간인지 미리 확인하세요.'});
+
+  $('#plan').innerHTML = days.map(x=>`
+    <article class="day ${x.cls}">
+      <div class="dhead">
+        <span class="dnum">${x.n} · ${x.d}</span>
+        <span class="dtitle">${esc(x.t)}</span>
+        <span class="dstay">${esc(x.stay)}</span>
+      </div>
+      <ul class="items">${x.items.join('')}</ul>
+      <div class="dnote">${esc(x.note)}</div>
+    </article>`).join('');
+}
+
+$('#region').addEventListener('change', ()=>{ fillAirports(); build(); });
+['d1','t1','a1','d2','t2','a2'].forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('input', build); el.addEventListener('change', build);
+});
+fillAirports(); build();
+</script>
+</body>
+</html>
